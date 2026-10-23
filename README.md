@@ -4,6 +4,8 @@ A highly available, horizontally scalable web application deployed on AWS and ma
 
 This project started as a hands-on AWS infrastructure build and was later rebuilt as Infrastructure as Code. The goal was to gain practical experience designing, deploying, troubleshooting, and managing a production-style cloud environment using core AWS services.
 
+## Architecture
+
 ![AWS Scalable Web Application Architecture](architecture.png)
 
 ## What This Project Demonstrates

@@ -4,50 +4,7 @@ A highly available, horizontally scalable web application deployed on AWS and ma
 
 This project started as a hands-on AWS infrastructure build and was later rebuilt as Infrastructure as Code. The goal was to gain practical experience designing, deploying, troubleshooting, and managing a production-style cloud environment using core AWS services.
 
-<img width="1312" height="1199" alt="image" src="https://github.com/user-attachments/assets/96cde4e7-2e2e-4dab-9672-72f19d9a9c35" />
-
-## Architecture
-
-```text
-                         INTERNET
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Application Load    │
-                 │ Balancer            │
-                 │ HTTP :80            │
-                 └──────────┬──────────┘
-                            │
-                     Target Group
-                        :8000
-                       /       \
-                      ▼         ▼
-              ┌──────────┐ ┌──────────┐
-              │ EC2      │ │ EC2      │
-              │ AZ-1     │ │ AZ-2     │
-              │ Flask +  │ │ Flask +  │
-              │ Gunicorn │ │ Gunicorn │
-              └────┬─────┘ └────┬─────┘
-                   │             │
-                   └──────┬──────┘
-                          │
-                          ▼
-                 ┌─────────────────┐
-                 │ RDS PostgreSQL  │
-                 │ Private Subnets │
-                 └─────────────────┘
-                          ▲
-                          │
-                 ┌─────────────────┐
-                 │ AWS Secrets     │
-                 │ Manager         │
-                 └─────────────────┘
-
-              Auto Scaling Group
-                 Min: 2
-              Desired: 2
-                 Max: 4
-```
+![AWS Scalable Web Application Architecture](architecture.png)
 
 ## What This Project Demonstrates
 

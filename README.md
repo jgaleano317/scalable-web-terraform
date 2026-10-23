@@ -3,6 +3,7 @@
 A highly available, horizontally scalable web application deployed on AWS and managed entirely through Terraform.
 
 This project started as a hands-on AWS infrastructure build and was later rebuilt as Infrastructure as Code. The goal was to gain practical experience designing, deploying, troubleshooting, and managing a production-style cloud environment using core AWS services.
+
 [AWS Scalable Web Application Architecture] 
 <img width="1312" height="1199" alt="image" src="https://github.com/user-attachments/assets/96cde4e7-2e2e-4dab-9672-72f19d9a9c35" />
 

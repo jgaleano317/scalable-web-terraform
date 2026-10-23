@@ -1,0 +1,40 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing build dependencies..."
+      - python3 --version
+      - pip3 --version
+      - echo "Installing Terraform..."
+      - curl -fsSL https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip -o terraform.zip
+      - unzip -o terraform.zip
+      - mv terraform /usr/local/bin/terraform
+      - terraform version
+
+  pre_build:
+    commands:
+      - echo "Initializing Terraform..."
+      - terraform init -backend=false
+      - echo "Validating Terraform configuration..."
+      - terraform fmt -check
+      - terraform validate
+
+  build:
+    commands:
+      - echo "Build phase started..."
+      - echo "Validating project files..."
+      - test -f compute.tf
+      - test -f autoscaling.tf
+      - test -f load-balancer.tf
+      - test -f database.tf
+      - echo "Build validation completed successfully."
+
+  post_build:
+    commands:
+      - echo "Build completed successfully."
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: no

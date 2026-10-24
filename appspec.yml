@@ -6,6 +6,11 @@ files:
     destination: /home/ec2-user/scalable-web-app/
 
 hooks:
+  BeforeInstall:
+    - location: scripts/cleanup_application.sh
+      timeout: 60
+      runas: root
+
   ApplicationStop:
     - location: scripts/stop_application.sh
       timeout: 60

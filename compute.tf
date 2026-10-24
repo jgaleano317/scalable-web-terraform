@@ -20,6 +20,17 @@ resource "aws_launch_template" "web" {
   image_id      = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
 
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_size           = 10
+      volume_type           = "gp3"
+      delete_on_termination = true
+      encrypted             = true
+    }
+  }
+
   key_name = "scalable-web-key"
 
   iam_instance_profile {

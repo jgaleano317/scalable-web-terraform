@@ -41,6 +41,15 @@ echo "=== Installing packages ==="
 dnf update -y
 dnf install -y python3 python3-pip postgresql15
 echo "=== Package installation complete ==="
+echo "=== Installing CodeDeploy agent ==="
+dnf install -y wget
+cd /tmp
+wget https://aws-codedeploy-us-east-2.s3.us-east-2.amazonaws.com/latestv2/install
+chmod +x ./install
+./install auto
+systemctl enable codedeploy-agent
+systemctl start codedeploy-agent
+echo "=== CodeDeploy agent installed and started ==="
 
 echo "=== Creating application directory ==="
 mkdir -p /home/ec2-user/scalable-web-app

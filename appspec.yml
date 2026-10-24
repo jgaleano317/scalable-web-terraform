@@ -1,0 +1,22 @@
+version: 0.0
+os: linux
+
+files:
+  - source: app/
+    destination: /home/ec2-user/scalable-web-app/
+
+hooks:
+  ApplicationStop:
+    - location: scripts/stop_application.sh
+      timeout: 60
+      runas: root
+
+  ApplicationStart:
+    - location: scripts/start_application.sh
+      timeout: 60
+      runas: root
+
+  ValidateService:
+    - location: scripts/validate_service.sh
+      timeout: 60
+      runas: root

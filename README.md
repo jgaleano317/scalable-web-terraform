@@ -15,11 +15,11 @@ Infrastructure changes are managed with Terraform, while application deployments
 CI/CD Workflow
 
 GitHub
-   ↓
+   &rarr;
 AWS CodePipeline
-   ↓
+   &rarr;
 AWS CodeBuild
-   ↓
+   &rarr;
 AWS CodeDeploy
    ↓
 Auto Scaling Group

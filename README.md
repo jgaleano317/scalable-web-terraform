@@ -21,15 +21,15 @@ AWS CodePipeline
 AWS CodeBuild
    &rarr;
 AWS CodeDeploy
-   ↓
+   &rarr;
 Auto Scaling Group
-   ↓
+   &rarr;
 EC2 Instances
-   ↓
+   &rarr;
 Application Load Balancer
-   ↓
+   &rarr;
 Flask Application
-   ↓
+   &rarr;
 RDS PostgreSQL
 
 Terraform manages the underlying AWS infrastructure, while CodePipeline automates the application deployment workflow from GitHub through CodeBuild and CodeDeploy.

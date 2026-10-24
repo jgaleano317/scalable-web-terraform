@@ -1,316 +1,552 @@
-# Scalable AWS Web Application with Terraform
+# Scalable AWS Web Application with Terraform & AWS CI/CD
 
-A highly available, horizontally scalable web application deployed on AWS and managed entirely through Terraform.
+A highly available, horizontally scalable web application deployed on AWS and managed through Terraform, with an automated CI/CD pipeline using AWS CodePipeline, CodeBuild, and CodeDeploy.
 
-This project started as a hands-on AWS infrastructure build and was later rebuilt as Infrastructure as Code. The goal was to gain practical experience designing, deploying, troubleshooting, and managing a production-style cloud environment using core AWS services.
+This project was built to gain hands-on experience designing, deploying, troubleshooting, and automating a production-style cloud environment using core AWS services and Infrastructure as Code.
+
+The application runs on Amazon EC2 behind an Application Load Balancer and Auto Scaling Group, uses Amazon RDS PostgreSQL for persistent data, and retrieves database credentials securely from AWS Secrets Manager.
+
+Infrastructure changes are managed with Terraform, while application deployments are automated through an AWS-native CI/CD pipeline connected to GitHub.
 
 ## Architecture
 
 ![AWS Scalable Web Application Architecture](architecture.png)
 
-## What This Project Demonstrates
+CI/CD Workflow
 
-- AWS VPC and subnet architecture
-- Multi-AZ infrastructure
-- Public and private subnet separation
-- Application Load Balancing
-- EC2 Auto Scaling
-- Launch Templates
-- PostgreSQL on Amazon RDS
-- AWS Secrets Manager
-- IAM roles and least-privilege access
-- Security groups and network-level access control
-- Flask and Gunicorn
-- Linux systemd services
-- Infrastructure as Code with Terraform
-- AWS CLI troubleshooting
-- Health checks and automated instance replacement
-- Git and GitHub workflow
+GitHub
+   ↓
+AWS CodePipeline
+   ↓
+AWS CodeBuild
+   ↓
+AWS CodeDeploy
+   ↓
+Auto Scaling Group
+   ↓
+EC2 Instances
+   ↓
+Application Load Balancer
+   ↓
+Flask Application
+   ↓
+RDS PostgreSQL
 
-## AWS Infrastructure
+Terraform manages the underlying AWS infrastructure, while CodePipeline automates the application deployment workflow from GitHub through CodeBuild and CodeDeploy.
 
-### Networking
+What This Project Demonstrates
 
-The infrastructure is deployed in `us-east-2` using a dedicated VPC:
+AWS VPC and subnet architecture
 
-- VPC: `10.0.0.0/16`
-- 2 public subnets across separate Availability Zones
-- 2 private subnets across separate Availability Zones
-- Internet Gateway for public traffic
-- Public route table
-- Private subnets used for the database
+Multi-AZ infrastructure
 
-The EC2 instances are placed in public subnets because this project intentionally avoids a NAT Gateway to reduce unnecessary AWS costs. The application itself is protected by security groups and is accessed through the Application Load Balancer.
+Public and private subnet separation
 
-### Compute
+Application Load Balancing
 
-EC2 instances run:
+EC2 Auto Scaling
 
-- Amazon Linux 2023
-- `t3.micro`
-- Python 3
-- Flask
-- Gunicorn
-- systemd
+Launch Templates
 
-The Auto Scaling Group is configured with:
+PostgreSQL on Amazon RDS
 
-- Minimum: 2 instances
-- Desired: 2 instances
-- Maximum: 4 instances
-- CPU target tracking: 60%
-- Elastic Load Balancing health checks
+AWS Secrets Manager
 
-When an unhealthy instance is detected, the Auto Scaling Group can terminate and replace it automatically.
+IAM roles and least-privilege access
 
-### Load Balancing
+Security groups and network-level access control
 
-An internet-facing Application Load Balancer receives HTTP traffic on port 80 and forwards requests to the EC2 target group on port 8000.
+Flask and Gunicorn
 
-The target group uses:
+Linux systemd services
 
-```text
-Health Check Path: /health
-Protocol: HTTP
-Port: 8000
-Expected Status: 200
-```
+Infrastructure as Code with Terraform
 
-The `/health` endpoint verifies that the application can successfully communicate with the PostgreSQL database.
+AWS CodePipeline
 
-### Database
+AWS CodeBuild
 
-The application uses Amazon RDS PostgreSQL:
+AWS CodeDeploy
 
-- PostgreSQL 17
-- `db.t3.micro`
-- 20 GB gp3 storage
-- Storage encryption enabled
-- Single-AZ deployment
-- Public access disabled
-- Database located in private subnets
+GitHub integration through AWS CodeConnections
 
-The database security group only permits PostgreSQL traffic from the EC2 security group.
+Automated application deployments
 
-### Secrets Management
+Health checks and automated instance replacement
 
-Database credentials are stored in AWS Secrets Manager rather than being hard-coded into the application.
+AWS CLI troubleshooting
 
-The EC2 instances use an IAM instance role that permits:
+Git and GitHub workflow
 
-```text
-secretsmanager:GetSecretValue
-```
+AWS Infrastructure
 
-only for the application's database secret.
+Networking
 
-The Flask application retrieves the credentials at runtime using `boto3`.
+The infrastructure is deployed in the us-east-2 AWS region using a dedicated VPC with the following layout:
 
-## Application
+VPC CIDR: 10.0.0.0/16
 
-The Flask application provides a simple server inventory interface.
+2 public subnets across separate Availability Zones
 
-The homepage retrieves server information from PostgreSQL and displays:
+2 private subnets across separate Availability Zones
 
-- Server ID
-- Hostname
-- Environment
-- Status
-- IP address
+Internet Gateway
 
-Example:
+Public route table
 
-```text
-Server Inventory
+Private subnets for the RDS database
 
-ID   Hostname        Environment   Status    IP Address
-1    web-server-01   production    running   10.0.1.91
-2    web-server-02   production    running   10.0.2.25
-3    web-server-03   staging       stopped   10.0.2.26
-```
+EC2 instances are deployed in the public subnets to avoid the additional cost of a NAT Gateway. Application access is still restricted through security groups and the Application Load Balancer.
 
-The application also provides:
+Compute
 
-```text
-/health
-```
+The application runs on Amazon Linux 2023 EC2 instances using:
 
-which performs a database connectivity check.
+t3.micro instances
 
-A successful response is:
+10 GiB encrypted gp3 root volumes
 
-```text
-healthy - database connection successful
-```
+Python 3
 
-## Terraform Structure
+Flask
 
-The infrastructure is separated into logical Terraform files:
+Gunicorn
 
-| File | Purpose |
-|---|---|
-| `provider.tf` | AWS provider and default configuration |
-| `variables.tf` | Configurable Terraform variables |
-| `networking.tf` | VPC, subnets, routes, and Internet Gateway |
-| `security-groups.tf` | ALB, EC2, and RDS security groups |
-| `database.tf` | RDS PostgreSQL and DB subnet group |
-| `iam.tf` | IAM role, policy, instance profile, and Secrets Manager secret |
-| `compute.tf` | EC2 Launch Template and application bootstrap |
-| `load-balancer.tf` | Application Load Balancer and target group |
-| `autoscaling.tf` | Auto Scaling Group and scaling policy |
-| `outputs.tf` | Useful infrastructure outputs |
+systemd
 
-## Deployment
+IAM instance profile
 
-Initialize Terraform:
+AWS CodeDeploy agent
 
-```bash
-terraform init
-```
+EC2 instances are managed by an Auto Scaling Group configured with:
 
-Validate the configuration:
+Minimum: 2 instances
 
-```bash
-terraform validate
-```
+Desired: 2 instances
 
-Review the planned changes:
+Maximum: 4 instances
 
-```bash
-terraform plan
-```
+Target CPU utilization: 60%
 
-Apply the infrastructure:
+Elastic Load Balancing health checks
 
-```bash
-terraform apply
-```
+Launch Template version 9
 
-Terraform provisions the networking, security, database, IAM, compute, load balancing, and Auto Scaling components.
+The Launch Template uses User Data for initial instance configuration, including package installation, application dependencies, systemd configuration, and CodeDeploy agent installation.
 
-## Security Considerations
+Load Balancing
 
-Several security controls were implemented as part of the project:
+An internet-facing Application Load Balancer distributes traffic across the EC2 instances.
 
-- RDS is not publicly accessible.
-- Database traffic is restricted to the EC2 security group.
-- EC2 application traffic is restricted to the Application Load Balancer.
-- Database credentials are stored in Secrets Manager.
-- EC2 uses an IAM role instead of long-lived AWS credentials.
-- The Secrets Manager IAM policy is scoped to the application's specific secret.
-- Temporary SSH access used during troubleshooting was removed after deployment.
-- Terraform state files are excluded from Git using `.gitignore`.
-- Terraform variable files are excluded from Git.
-- AWS credentials and database passwords are not stored in the repository.
-
-## Troubleshooting and Lessons Learned
-
-One of the most valuable parts of this project was troubleshooting the EC2 bootstrap process.
-
-The initial Launch Template versions experienced cloud-init failures. The Auto Scaling Group was creating instances, but the application was not being installed correctly and the expected systemd service was not being created.
-
-I investigated the instances directly using Linux tools and examined:
-
-```text
-/var/log/cloud-init-output.log
-/var/lib/cloud/instance/scripts/part-001
-```
-
-This exposed formatting and scripting problems in the generated User Data.
-
-The bootstrap process was rewritten with:
-
-- Explicit logging
-- Cleaner Bash heredocs
-- Correct Python indentation
-- Correct exception handling
-- More defensive service startup
-- systemd service creation
-- Clear installation-stage markers
-
-After deploying the corrected Launch Template, an Auto Scaling instance refresh successfully replaced the previous instances.
-
-Final result:
-
-```text
-2/2 EC2 instances
-Healthy
-InService
-Launch Template Version 7
-```
-
-The Application Load Balancer then successfully served the application, and the `/health` endpoint confirmed database connectivity.
-
-This troubleshooting process provided hands-on experience with the relationship between Terraform, EC2 Launch Templates, cloud-init, systemd, Auto Scaling health checks, and load balancer health checks.
-
-## Current Result
-
-The Terraform-managed environment successfully demonstrates:
-
-```text
 Internet
    ↓
 Application Load Balancer
    ↓
+Target Group
+   ↓
+EC2 Instances :8000
+
+The ALB listens on port 80 and forwards traffic to the application target group on port 8000.
+
+Health checks use:
+
+Protocol: HTTP
+
+Port: traffic-port
+
+Path: /health
+
+Expected response: 200
+
+This allows unhealthy instances to be detected and replaced automatically by the Auto Scaling Group.
+
+Database
+
+The application uses Amazon RDS PostgreSQL for persistent data.
+
+Configuration includes:
+
+PostgreSQL 17
+
+db.t3.micro
+
+20 GB gp3 storage
+
+Encryption at rest
+
+Single-AZ deployment
+
+Public access disabled
+
+Private subnets
+
+Database security group restricting PostgreSQL traffic to the EC2 security group
+
+The Flask application connects to the database at runtime using credentials retrieved from AWS Secrets Manager.
+
+Secrets Management
+
+Database credentials are stored in AWS Secrets Manager rather than being hard-coded into the application or Terraform configuration.
+
+The EC2 instance uses an IAM role to retrieve the secret at runtime through:
+
+secretsmanager:GetSecretValue
+
+The IAM policy is scoped specifically to the application's database credential secret.
+
+This avoids storing long-lived database credentials directly in the application code or Git repository.
+
+Application
+
+The application is a Flask-based server inventory application.
+
+It provides:
+
+Server ID
+
+Hostname
+
+Environment
+
+Status
+
+IP address
+
+The application exposes:
+
+/
+
+for the server inventory interface and:
+
+/health
+
+for application and database health validation.
+
+The application runs through Gunicorn and is managed as a Linux systemd service.
+
+Infrastructure as Code
+
+The AWS infrastructure is managed using Terraform.
+
+Terraform Structure
+
+provider.tf
+variables.tf
+networking.tf
+security-groups.tf
+database.tf
+iam.tf
+compute.tf
+load-balancer.tf
+autoscaling.tf
+outputs.tf
+
+Terraform is responsible for provisioning and managing:
+
+VPC networking
+
+Subnets
+
+Route tables
+
+Internet Gateway
+
+Security groups
+
+RDS PostgreSQL
+
+IAM roles and policies
+
+EC2 Launch Template
+
+Auto Scaling Group
+
+Application Load Balancer
+
+Target Group
+
+Listeners
+
+Typical Terraform workflow:
+
+terraform init
+terraform validate
+terraform plan
+terraform apply
+
+Terraform configuration is validated as part of the CI/CD build process.
+
+CI/CD Pipeline
+
+Application deployments are automated using AWS-native CI/CD services.
+
+Pipeline
+
+GitHub
+   ↓
+AWS CodePipeline
+   ↓
+AWS CodeBuild
+   ↓
+AWS CodeDeploy
+   ↓
+EC2 / Auto Scaling Group
+
+Source
+
+AWS CodePipeline is connected to the GitHub repository through AWS CodeConnections.
+
+Changes pushed to the main branch automatically trigger the pipeline.
+
+Build
+
+AWS CodeBuild performs validation and prepares the deployment artifact.
+
+The build process:
+
+Installs required build dependencies
+
+Initializes Terraform without a backend
+
+Runs terraform fmt -check
+
+Runs terraform validate
+
+Verifies required project files exist
+
+Packages the repository as the deployment artifact
+
+The build configuration is defined in:
+
+buildspec.yml
+
+Deployment
+
+AWS CodeDeploy deploys the application artifact to the EC2 instances managed by the Auto Scaling Group.
+
+The deployment configuration is defined in:
+
+appspec.yml
+
+Deployment lifecycle hooks include:
+
+ApplicationStop
+      ↓
+BeforeInstall
+      ↓
+Install
+      ↓
+ApplicationStart
+      ↓
+ValidateService
+
+The deployment scripts handle stopping the existing application, cleaning the deployment directory, starting the systemd service, and validating that the application is running.
+
+Deployment Scripts
+
+scripts/
+├── cleanup_application.sh
+├── stop_application.sh
+├── start_application.sh
+└── validate_service.sh
+
+This allows application deployments to be performed consistently across multiple EC2 instances.
+
+Security Considerations
+
+Security was considered throughout the infrastructure design.
+
+RDS is not publicly accessible
+
+Database traffic is restricted to the EC2 security group
+
+Application traffic is routed through the Application Load Balancer
+
+EC2 instances use IAM roles rather than long-lived AWS credentials
+
+Database credentials are stored in Secrets Manager
+
+Secrets Manager permissions are scoped to the application secret
+
+Security groups restrict access between infrastructure components
+
+Terraform variables containing sensitive values are excluded from Git
+
+Terraform state files are excluded from Git
+
+Database passwords are not stored in the repository
+
+SSH access was used for troubleshooting and is not part of the application's normal request path
+
+Troubleshooting & Lessons Learned
+
+One of the main goals of this project was gaining practical experience troubleshooting AWS infrastructure rather than simply deploying a working configuration.
+
+EC2 Bootstrap and Cloud-Init
+
+Early versions of the infrastructure experienced issues during EC2 initialization.
+
+Troubleshooting involved reviewing:
+
+/var/log/cloud-init-output.log
+
+and:
+
+/var/lib/cloud/instance/scripts/
+
+The User Data configuration was eventually rewritten with explicit logging, clearer installation stages, defensive error handling, and a systemd-managed application service.
+
+This made future instance launches easier to troubleshoot and helped ensure the application could reliably start as part of the instance lifecycle.
+
+CodeDeploy Disk Space Failure
+
+An early CodeDeploy deployment failed with:
+
+No space left on device
+(os error 28)
+
+The original EC2 Launch Template used a 2 GiB root volume, which was insufficient for the CodeDeploy deployment process and application artifacts.
+
+The Launch Template was updated to use a:
+
+10 GiB encrypted gp3
+
+root volume.
+
+The Auto Scaling Group was then refreshed so that new instances launched with the updated configuration.
+
+The subsequent instance refresh completed successfully.
+
+CodeDeploy File Conflict
+
+After resolving the disk space issue, CodeDeploy encountered another deployment failure because:
+
+/home/ec2-user/scalable-web-app/app.py
+
+already existed on the target instance.
+
+The deployment process was updated with a BeforeInstall cleanup hook that removes the previous application directory before CodeDeploy installs the new revision.
+
+This resulted in a clean deployment lifecycle for subsequent releases.
+
+CI/CD Validation
+
+The final pipeline was successfully validated end-to-end:
+
+Source   → Succeeded
+Build    → Succeeded
+Deploy   → Succeeded
+
+The deployment successfully delivered the application from GitHub through AWS CodePipeline, CodeBuild, and CodeDeploy to the EC2 instances behind the Auto Scaling Group.
+
+Both EC2 instances were healthy and registered with the Application Load Balancer following the deployment.
+
+Current Result
+
+The final environment consists of:
+
+GitHub
+   ↓
+AWS CodePipeline
+   ↓
+AWS CodeBuild
+   ↓
+AWS CodeDeploy
+   ↓
 Auto Scaling Group
    ↓
-2 × EC2
+2 × EC2 Instances
+   ↓
+Application Load Balancer
    ↓
 Flask / Gunicorn
    ↓
-Secrets Manager
+AWS Secrets Manager
    ↓
 RDS PostgreSQL
-```
 
-The infrastructure was successfully deployed, validated, troubleshot, and rebuilt through Terraform.
+Terraform manages the AWS infrastructure, while the CI/CD pipeline automates application delivery.
 
-## Future Improvements
+The project has been deployed, tested, troubleshot, and successfully validated as a working end-to-end AWS environment.
 
-Potential future iterations include:
+Future Improvements
 
-- NAT Gateway or alternative private-subnet outbound architecture
-- HTTPS using ACM
-- Route 53 DNS
-- CloudWatch dashboards and alarms
-- Centralized application logging
-- Remote Terraform state using S3
-- DynamoDB state locking where appropriate
-- Terraform modules
-- CI/CD with GitHub Actions or AWS CodePipeline
-- Automated testing
-- Blue/green or rolling application deployments
-- Containerized application deployment
+Potential future improvements include:
 
-## Technologies
+HTTPS with AWS Certificate Manager
 
-**Cloud**
+Route 53 DNS
 
-- AWS EC2
-- AWS VPC
-- AWS Application Load Balancer
-- AWS Auto Scaling
-- Amazon RDS
-- AWS Secrets Manager
-- AWS IAM
+CloudWatch dashboards and additional alarms
 
-**Infrastructure as Code**
+Centralized application logging
 
-- Terraform
-- AWS Provider
+Remote Terraform state using Amazon S3 and state locking
 
-**Application**
+Reusable Terraform modules
 
-- Python
-- Flask
-- Gunicorn
-- PostgreSQL
-- systemd
+Automated application testing
 
-**Tools**
+Blue/green or rolling deployment strategies
 
-- Linux
-- Bash
-- AWS CLI
-- Git
-- GitHub
+Containerizing the Flask application
+
+Further infrastructure hardening
+
+Technologies
+
+Cloud
+
+Amazon EC2
+
+Amazon VPC
+
+Application Load Balancer
+
+Auto Scaling
+
+Amazon RDS
+
+AWS Secrets Manager
+
+AWS IAM
+
+AWS CodePipeline
+
+AWS CodeBuild
+
+AWS CodeDeploy
+
+AWS CodeConnections
+
+Infrastructure as Code
+
+Terraform
+
+HashiCorp AWS Provider
+
+Application
+
+Python
+
+Flask
+
+Gunicorn
+
+PostgreSQL
+
+Linux systemd
+
+Tools
+
+Linux
+
+Bash
+
+AWS CLI
+
+Git
+
+GitHub
+
+Terraform
